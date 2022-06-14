@@ -16,7 +16,7 @@ public class ChatServer {
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(PORT);
-             AuthService authService = new InMemoryAuthService();) {
+             AuthService authService = new InMemoryAuthService()) {
             while (true) {
                 System.out.println("Сервер запущен. Ждем подключения клиента ");
                 final Socket socket;
@@ -25,7 +25,7 @@ public class ChatServer {
                 System.out.println("Клиент подключился");
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
@@ -33,5 +33,22 @@ public class ChatServer {
         for (ClientHandler client : clients) {
             client.sendMessage(message);
         }
+    }
+
+    public void subscribe(ClientHandler clientHandler) {
+        clients.add(clientHandler);
+    }
+
+    public boolean isNickBusy(String nick) {
+        for (ClientHandler client: clients) {
+            if (nick.equals(client.getNick())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void unsubscribe(ClientHandler client) {
+        clients.remove(client);
     }
 }

@@ -12,7 +12,7 @@ public class ChatClient {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
-    private ChatController controller;
+    private final ChatController controller;
 
     public ChatClient(ChatController controller) {
         this.controller = controller;
@@ -24,6 +24,7 @@ public class ChatClient {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
+                waitAuth();
                 readMessage();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -32,6 +33,24 @@ public class ChatClient {
             }
 
         }).start();
+    }
+
+    private void waitAuth() {
+        while (true) {
+
+            final String message;
+            try {
+                message = in.readUTF();
+                if (message.startsWith("/authok")) {
+                    final String[] split = message.split("\\p{Blank}+");
+                    final String nick = split[1];
+                    controller.addMessage("Успешная авторизация под ником " + nick);
+                    break;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void readMessage() throws IOException {
@@ -49,21 +68,21 @@ public class ChatClient {
             try {
                 in.close();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
         if (out != null) {
             try {
                 out.close();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
         if (socket != null) {
             try {
                 socket.close();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
     }
