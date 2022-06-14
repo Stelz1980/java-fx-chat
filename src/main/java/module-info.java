@@ -3,6 +3,6 @@ module ru.geekbrains.chatfxapp {
     requires javafx.fxml;
 
 
-    opens ru.geekbrains.chatfxapp to javafx.fxml;
-    exports ru.geekbrains.chatfxapp;
+    exports ru.geekbrains.chatfxapp.client;
+    opens ru.geekbrains.chatfxapp.client to javafx.fxml;
 }
