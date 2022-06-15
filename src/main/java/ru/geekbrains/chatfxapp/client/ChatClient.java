@@ -31,19 +31,18 @@ public class ChatClient {
             } finally {
                 closeConnection();
             }
-
         }).start();
     }
 
     private void waitAuth() {
         while (true) {
-
             final String message;
             try {
                 message = in.readUTF();
                 if (message.startsWith("/authok")) {
                     final String[] split = message.split("\\p{Blank}+");
                     final String nick = split[1];
+                    controller.sendAuth(true);
                     controller.addMessage("Успешная авторизация под ником " + nick);
                     break;
                 }
@@ -57,6 +56,7 @@ public class ChatClient {
         while (true) {
             final String message = in.readUTF();
             if (message.equalsIgnoreCase(SERVER_TO_TERMINATE)) {
+                controller.sendAuth(false);
                 break;
             }
             controller.addMessage(message);

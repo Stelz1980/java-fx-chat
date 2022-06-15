@@ -3,11 +3,21 @@ package ru.geekbrains.chatfxapp.client;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.util.Optional;
 
 public class ChatController {
+    @FXML
+    private TextField loginField;
+    @FXML
+    private PasswordField passField;
+    @FXML
+    private HBox authBox;
+    @FXML
+    private VBox messageBox;
     @FXML
     private TextArea messageArea;
     @FXML
@@ -52,5 +62,13 @@ public class ChatController {
 
     public void addMessage(String message) {
         messageArea.appendText(message + "\n");
+    }
+
+    public void signButtonClick() {
+        client.sendMessage("/auth " + loginField.getText() + " " + passField.getText());
+    }
+    public void sendAuth(boolean success) {
+        authBox.setVisible(!success);
+        messageBox.setVisible(success);
     }
 }

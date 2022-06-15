@@ -6,15 +6,25 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.PasswordField?>
 <VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
       fx:controller="ru.geekbrains.chatfxapp.client.ChatController">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
+    <VBox>
+        <HBox fx:id="authBox">
+            <TextField fx:id="loginField" promptText="login"/>
+            <PasswordField fx:id="passField" promptText="password"/>
+            <Button text="Sign in" onAction="#signButtonClick"/>
+        </HBox>
+        <VBox visible="false" fx:id="messageBox">
+            <TextArea fx:id="messageArea" editable="false" VBox.vgrow="ALWAYS"/>
+            <HBox spacing="20">
+                <TextField fx:id="messageField" HBox.hgrow="ALWAYS"/>
+                <Button text="Send" defaultButton="true" onAction="#clickSendButton"/>
+            </HBox>
+        </VBox>
+    </VBox>
 
-    <TextArea fx:id="messageArea"  editable="false" VBox.vgrow="ALWAYS"/>
-    <HBox spacing="20">
-        <TextField fx:id="messageField" HBox.hgrow="ALWAYS"/>
-        <Button text="Send" defaultButton="true" onAction="#clickSendButton"/>
-    </HBox>
 </VBox>

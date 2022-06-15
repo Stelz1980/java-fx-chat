@@ -7,7 +7,7 @@ import java.net.Socket;
 
 public class ClientHandler {
     private static final String SERVER_TO_TERMINATE = "/end";
-    private  AuthService authService;
+    private AuthService authService;
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
@@ -38,12 +38,11 @@ public class ClientHandler {
         while (true) {
             try {
                 final String message = in.readUTF();
-                  if (message.startsWith("/auth")) {
+                if (message.startsWith("/auth")) {
                     final String[] split = message.split("\\p{Blank}+");
                     final String login = split[1];
                     final String password = split[2];
                     final String nick = authService.getNickByLoginAndPassword(login, password);
-                      System.out.println("Ник " + nick);
                     if (nick != null) {
                         if (server.isNickBusy(nick)) {
                             sendMessage("Пользователь уже авторизован");
@@ -51,7 +50,7 @@ public class ClientHandler {
                         }
                         sendMessage("/authok " + nick);
                         this.nick = nick;
-                        server.broadcast("Пользователь" + nick + " зашел в чат");
+                        server.broadcast("Пользователь " + nick + " зашел в чат");
                         server.subscribe(this);
                         break;
                     } else {
@@ -105,8 +104,11 @@ public class ClientHandler {
                 if (message.equalsIgnoreCase(SERVER_TO_TERMINATE)) {
                     break;
                 }
-                server.broadcast(nick + ": " + message);
-                out.writeUTF(message);
+                if (message.startsWith("\\w")) {
+                    server.sendPrivateMessage(nick + " " + message, this);
+                } else {
+                    server.broadcast(nick + ": " + message);
+                }
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
