@@ -13,7 +13,7 @@ public class ChatClientApp extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(ChatClientApp.class.getResource("main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         stage.setTitle("GB Chat Client");
-        stage.setScene( scene );
+        stage.setScene(scene);
         stage.show();
     }
 
