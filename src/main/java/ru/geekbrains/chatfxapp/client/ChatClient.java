@@ -1,14 +1,21 @@
 package ru.geekbrains.chatfxapp.client;
 
+import javafx.application.Platform;
+import ru.geekbrains.chatfxapp.Command;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static ru.geekbrains.chatfxapp.Command.AUTHOK;
+import static ru.geekbrains.chatfxapp.Command.END;
+
+
 public class ChatClient {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 8189;
-    private static final String SERVER_TO_TERMINATE = "/end";
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
@@ -39,12 +46,17 @@ public class ChatClient {
             final String message;
             try {
                 message = in.readUTF();
-                if (message.startsWith("/authok")) {
-                    final String[] split = message.split("\\p{Blank}+");
-                    final String nick = split[1];
+                final Command command = Command.getCommand(message);
+                final String[] params = command.parse(message);
+                if (command == AUTHOK) {
+                    final String nick = params[0];
                     controller.sendAuth(true);
                     controller.addMessage("Успешная авторизация под ником " + nick);
                     break;
+                }
+                if (command == Command.ERROR) {
+                    Platform.runLater(() -> controller.showError(params[0]));
+                    continue;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -55,11 +67,23 @@ public class ChatClient {
     private void readMessage() throws IOException {
         while (true) {
             final String message = in.readUTF();
-            if (message.equalsIgnoreCase(SERVER_TO_TERMINATE)) {
+            final Command command = Command.getCommand(message);
+            if (command == END) {
                 controller.sendAuth(false);
                 break;
             }
-            controller.addMessage(message);
+            final String[] params = command.parse(message);
+            if (command == Command.ERROR) {
+                String messageError = command.parse(message)[0];
+                Platform.runLater(() -> controller.showError(messageError));
+                continue;
+            }
+            if (command == Command.MESSAGE) {
+                Platform.runLater(() -> controller.addMessage(command.parse(message)[0]));
+            }
+            if (command == Command.CLIENTS) {
+                Platform.runLater(() -> controller.updateClientList(params));
+            }
         }
     }
 
@@ -87,11 +111,15 @@ public class ChatClient {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendMessage(Command command, String... params) {
+        sendMessage(command.collectMessage(params));
     }
 }
