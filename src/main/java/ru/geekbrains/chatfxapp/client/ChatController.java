@@ -62,8 +62,9 @@ public class ChatController {
         if (selectedNick != null) {
             client.sendMessage(Command.PRIVATE_MESSAGE, selectedNick, message);
             selectedNick = null;
+        } else {
+            client.sendMessage(Command.MESSAGE, message);
         }
-        client.sendMessage(Command.MESSAGE, message);
         messageField.clear();
         messageField.requestFocus();
     }
@@ -88,9 +89,10 @@ public class ChatController {
     }
 
     public void selectClient(MouseEvent mouseEvent) {
+        System.out.println("двойнок клик");
         if (mouseEvent.getClickCount() == 2) {
             final String selectedNick = clientList.getSelectionModel().getSelectedItem();
-            if (!selectedNick.isEmpty() && selectedNick != null) {
+            if (!selectedNick.isEmpty()) {
                 this.selectedNick = selectedNick;
             }
         }

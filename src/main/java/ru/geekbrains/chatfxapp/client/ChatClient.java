@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static java.lang.Thread.sleep;
 import static ru.geekbrains.chatfxapp.Command.AUTHOK;
 import static ru.geekbrains.chatfxapp.Command.END;
 
@@ -15,11 +16,13 @@ import static ru.geekbrains.chatfxapp.Command.END;
 public class ChatClient {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 8189;
+    private static final int TIME_OUT = 12000;
 
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
     private final ChatController controller;
+    private volatile String nick;
 
     public ChatClient(ChatController controller) {
         this.controller = controller;
@@ -31,32 +34,48 @@ public class ChatClient {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
-                waitAuth();
-                readMessage();
+                if (waitAuth()) {
+                    readMessage();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 closeConnection();
             }
         }).start();
+        new Thread(() -> {
+            try {
+                sleep(TIME_OUT);
+                if (nick == null) {
+                    Platform.runLater(() -> controller.showError("Вы не смогли законнектиться за " + TIME_OUT/1000 + " секунд. Поэтому отключаемся"));
+                    sendMessage(END);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
-    private void waitAuth() {
+    private boolean waitAuth() {
         while (true) {
             final String message;
             try {
                 message = in.readUTF();
+                System.out.println(message);
                 final Command command = Command.getCommand(message);
                 final String[] params = command.parse(message);
                 if (command == AUTHOK) {
-                    final String nick = params[0];
+                    nick = params[0];
                     controller.sendAuth(true);
                     controller.addMessage("Успешная авторизация под ником " + nick);
-                    break;
+                    return true;
                 }
                 if (command == Command.ERROR) {
                     Platform.runLater(() -> controller.showError(params[0]));
                     continue;
+                }
+                if (command == Command.END) {
+                    return false;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -88,6 +107,7 @@ public class ChatClient {
     }
 
     private void closeConnection() {
+        System.out.println("Выключаемся");
         if (in != null) {
             try {
                 in.close();
