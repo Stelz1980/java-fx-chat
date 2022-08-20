@@ -16,7 +16,7 @@ import static ru.geekbrains.chatfxapp.Command.END;
 public class ChatClient {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 8189;
-    private static final int TIME_OUT = 12000;
+    private static final int TIME_OUT = 60000;
 
     private Socket socket;
     private DataInputStream in;

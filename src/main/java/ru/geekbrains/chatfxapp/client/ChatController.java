@@ -89,7 +89,6 @@ public class ChatController {
     }
 
     public void selectClient(MouseEvent mouseEvent) {
-        System.out.println("двойнок клик");
         if (mouseEvent.getClickCount() == 2) {
             final String selectedNick = clientList.getSelectionModel().getSelectedItem();
             if (!selectedNick.isEmpty()) {

@@ -19,7 +19,7 @@ public class ChatServer {
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(PORT);
-             AuthService authService = new InMemoryAuthService()) {
+             AuthService authService = new DatabaseAuthService()) {
             while (true) {
                 System.out.println("Сервер запущен. Ждем подключения клиента ");
                 final Socket socket;
