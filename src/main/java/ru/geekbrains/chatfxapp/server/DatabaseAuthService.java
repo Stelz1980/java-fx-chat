@@ -33,6 +33,18 @@ public class DatabaseAuthService implements AuthService {
         return null;
     }
 
+    public void updateNick(String newNick, String oldNick) {
+        String sql =  "UPDATE users SET nick = ? WHERE nick = ?";
+        try {
+            ps = connection.  prepareStatement(sql);
+            ps.setString(1, newNick);
+            ps.setString(2, oldNick);
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void close() {
         if (connection != null) {

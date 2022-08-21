@@ -68,8 +68,10 @@ public class ChatServer {
     }
 
     public void UpdateNickMessage(ClientHandler client, String oldNick) {
+        String newNick = client.getNick();
+        client.getAuthService().updateNick(newNick, oldNick);
         clients.remove(oldNick);
-        clients.put(client.getNick(), client);
+        clients.put(newNick, client);
         broadcastClientList();
         broadcast(Command.MESSAGE, "Пользователь под ником " + oldNick + " сменил свой ник на новый- " + client.getNick());
     }

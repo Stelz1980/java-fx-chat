@@ -1,13 +1,15 @@
 package ru.geekbrains.chatfxapp.server;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InMemoryAuthService implements AuthService {
 
     private static class UserData {
-        private final String nick;
+        private String nick;
         private final String Login;
         private final String password;
 
@@ -15,6 +17,10 @@ public class InMemoryAuthService implements AuthService {
             this.nick = nick;
             Login = login;
             this.password = password;
+        }
+
+        public void setNick(String nick) {
+            this.nick = nick;
         }
 
         public String getNick() {
@@ -47,6 +53,15 @@ public class InMemoryAuthService implements AuthService {
             }
         }
         return null;
+    }
+
+    public void updateNick(String newNick, String oldNick) {
+        for (UserData user : users) {
+            if (user.getNick().equals(oldNick)) {
+                user.setNick(newNick);
+                return;
+            }
+        }
     }
 
     @Override

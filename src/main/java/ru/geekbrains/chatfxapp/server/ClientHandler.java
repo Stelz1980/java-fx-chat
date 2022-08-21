@@ -147,4 +147,8 @@ public class ClientHandler {
     public String getNick() {
         return nick;
     }
+
+    public AuthService getAuthService() {
+        return authService;
+    }
 }
