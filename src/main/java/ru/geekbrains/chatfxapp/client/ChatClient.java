@@ -1,18 +1,28 @@
 package ru.geekbrains.chatfxapp.client;
 
+import javafx.application.Platform;
+import ru.geekbrains.chatfxapp.Command;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static java.lang.Thread.sleep;
+import static ru.geekbrains.chatfxapp.Command.AUTHOK;
+import static ru.geekbrains.chatfxapp.Command.END;
+
+
 public class ChatClient {
     private static final String SERVER_ADDR = "localhost";
     private static final int SERVER_PORT = 8189;
-    private static final String SERVER_TO_TERMINATE = "/end";
+    private static final int TIME_OUT = 60000;
+
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
     private final ChatController controller;
+    private volatile String nick;
 
     public ChatClient(ChatController controller) {
         this.controller = controller;
@@ -24,27 +34,48 @@ public class ChatClient {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
-                waitAuth();
-                readMessage();
+                if (waitAuth()) {
+                    readMessage();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 closeConnection();
             }
         }).start();
+        new Thread(() -> {
+            try {
+                sleep(TIME_OUT);
+                if (nick == null) {
+                    Platform.runLater(() -> controller.showError("Вы не смогли законнектиться за " + TIME_OUT/1000 + " секунд. Поэтому отключаемся"));
+                    sendMessage(END);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
-    private void waitAuth() {
+    private boolean waitAuth() {
         while (true) {
             final String message;
             try {
                 message = in.readUTF();
-                if (message.startsWith("/authok")) {
-                    final String[] split = message.split("\\p{Blank}+");
-                    final String nick = split[1];
+                System.out.println(message);
+                final Command command = Command.getCommand(message);
+                final String[] params = command.parse(message);
+                if (command == AUTHOK) {
+                    nick = params[0];
                     controller.sendAuth(true);
                     controller.addMessage("Успешная авторизация под ником " + nick);
-                    break;
+                    return true;
+                }
+                if (command == Command.ERROR) {
+                    Platform.runLater(() -> controller.showError(params[0]));
+                    continue;
+                }
+                if (command == Command.END) {
+                    return false;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -55,15 +86,28 @@ public class ChatClient {
     private void readMessage() throws IOException {
         while (true) {
             final String message = in.readUTF();
-            if (message.equalsIgnoreCase(SERVER_TO_TERMINATE)) {
+            final Command command = Command.getCommand(message);
+            if (command == END) {
                 controller.sendAuth(false);
                 break;
             }
-            controller.addMessage(message);
+            final String[] params = command.parse(message);
+            if (command == Command.ERROR) {
+                String messageError = command.parse(message)[0];
+                Platform.runLater(() -> controller.showError(messageError));
+                continue;
+            }
+            if (command == Command.MESSAGE) {
+                Platform.runLater(() -> controller.addMessage(command.parse(message)[0]));
+            }
+            if (command == Command.CLIENTS) {
+                Platform.runLater(() -> controller.updateClientList(params));
+            }
         }
     }
 
     private void closeConnection() {
+        System.out.println("Выключаемся");
         if (in != null) {
             try {
                 in.close();
@@ -87,11 +131,15 @@ public class ChatClient {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendMessage(Command command, String... params) {
+        sendMessage(command.collectMessage(params));
     }
 }

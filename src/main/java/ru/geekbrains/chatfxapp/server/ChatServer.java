@@ -1,23 +1,25 @@
 package ru.geekbrains.chatfxapp.server;
 
+import ru.geekbrains.chatfxapp.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ChatServer {
     private static final int PORT = 8189;
-    private final List<ClientHandler> clients;
+    private final Map<String, ClientHandler> clients;
 
-    public ChatServer()
-    {
-        this.clients = new ArrayList<>();
+    public ChatServer() {
+        this.clients = new HashMap<>();
     }
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(PORT);
-             AuthService authService = new InMemoryAuthService()) {
+             AuthService authService = new DatabaseAuthService()) {
             while (true) {
                 System.out.println("Сервер запущен. Ждем подключения клиента ");
                 final Socket socket;
@@ -30,43 +32,47 @@ public class ChatServer {
         }
     }
 
-    public void broadcast(String message) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(message);
+    public void sendPrivateMessage(ClientHandler from, String nickTo, String message) {
+        final ClientHandler clientTo = clients.get(nickTo);
+        if (clientTo == null) {
+            from.sendMessage(Command.ERROR, "Пользователь не авторизован");
+            return;
         }
+        clientTo.sendMessage(Command.MESSAGE, "От " + from.getNick() + ": " + message);
+        from.sendMessage(Command.MESSAGE, "Участнику " + nickTo + ": " + message);
     }
 
-    public void sendPrivateMessage(String message, ClientHandler clientHandler) {
-        try {
-            final String[] split = message.split("\\p{Blank}+");
-            final String nickFrom = split[0];
-            final String nickTo = split[2];
-            final String messageText = split[3];
-            for (ClientHandler client : clients) {
-                if (client.getNick().equalsIgnoreCase(nickTo)) {
-                    client.sendMessage(nickFrom + ": " + messageText);
-                }
-            }
-        }
-        catch (Exception e) {
-            clientHandler.sendMessage("Не смог отправить сообщение. Проверьте формат еще раз");
-        }
-    }
-
-    public void subscribe(ClientHandler clientHandler) {
-        clients.add(clientHandler);
+    public void subscribe(ClientHandler client) {
+        clients.put(client.getNick(), client);
+        broadcastClientList();
     }
 
     public boolean isNickBusy(String nick) {
-        for (ClientHandler client : clients) {
-            if (nick.equals(client.getNick())) {
-                return true;
-            }
-        }
-        return false;
+        return clients.get(nick) != null;
     }
 
     public void unsubscribe(ClientHandler client) {
-        clients.remove(client);
+        clients.remove(client.getNick());
+        broadcastClientList();
+    }
+
+    private void broadcastClientList() {
+        String nicks = clients.values().stream().map(ClientHandler::getNick).collect(Collectors.joining(" "));
+        broadcast(Command.CLIENTS, nicks);
+    }
+
+    public void broadcast(Command command, String message) {
+        for (ClientHandler client : clients.values()) {
+            client.sendMessage(command, message);
+        }
+    }
+
+    public void UpdateNickMessage(ClientHandler client, String oldNick) {
+        String newNick = client.getNick();
+        client.getAuthService().updateNick(newNick, oldNick);
+        clients.remove(oldNick);
+        clients.put(newNick, client);
+        broadcastClientList();
+        broadcast(Command.MESSAGE, "Пользователь под ником " + oldNick + " сменил свой ник на новый- " + client.getNick());
     }
 }
