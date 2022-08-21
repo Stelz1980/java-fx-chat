@@ -25,6 +25,9 @@ public class ChatController {
     private TextArea messageArea;
     @FXML
     private TextField messageField;
+    @FXML
+    private TextField newNickField;
+
     private final ChatClient client;
     private String selectedNick;
 
@@ -108,5 +111,10 @@ public class ChatController {
 
     public ChatClient getClient() {
         return client;
+    }
+
+    public void changeNickButton() {
+        System.out.println(newNickField.getText());
+        client.sendMessage(Command.NEW_NICK, newNickField.getText());
     }
 }

@@ -29,6 +29,10 @@
             </VBox>
             <VBox>
                 <Button text="Sign out" onAction="#signOutClick"/>
+                <HBox spacing="20">
+                    <TextField fx:id="newNickField" HBox.hgrow="ALWAYS"/>
+                    <Button text="Change Nick" defaultButton="false" onAction="#changeNickButton"/>
+                </HBox>
                 <ListView fx:id="clientList" minWidth="200" maxWidth="200" onMouseClicked="#selectClient"/>
             </VBox>
         </HBox>

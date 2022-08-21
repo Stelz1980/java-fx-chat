@@ -57,6 +57,13 @@ public enum Command {
             final String[] split = commandText.split(TOKEN_DELIMITER, 2);
             return new String[]{split[1]};
         }
+    },
+        NEW_NICK("/nick") {
+            @Override
+            public String[] parse(String commandText) {
+                final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+                return new String[]{split[1]};
+            }
     };
 
 

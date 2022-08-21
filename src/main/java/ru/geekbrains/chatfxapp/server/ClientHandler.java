@@ -62,7 +62,7 @@ public class ClientHandler {
                         sendMessage(Command.ERROR, "Неверные логин и пароль");
                     }
                 } else if (command == Command.END) {
-                     return false;
+                         return false;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -124,6 +124,17 @@ public class ClientHandler {
                 if (command == Command.PRIVATE_MESSAGE) {
                     final String[] params = command.parse(message);
                     server.sendPrivateMessage(this, params[0], params[1]);
+                    continue;
+                }
+                if (command == Command.NEW_NICK) {
+                    final String[] params = command.parse(message);
+                    if (!server.isNickBusy(params[0])) {
+                        String oldNick = this.nick;
+                        this.nick = params[0];
+                        server.UpdateNickMessage(this, oldNick);
+                    } else {
+                        sendMessage(Command.ERROR, "Такой ник уже занят. Выберите другой");
+                    }
                     continue;
                 }
                 server.broadcast(Command.MESSAGE, nick + ": " + command.parse(message)[0]);

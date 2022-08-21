@@ -66,4 +66,11 @@ public class ChatServer {
             client.sendMessage(command, message);
         }
     }
+
+    public void UpdateNickMessage(ClientHandler client, String oldNick) {
+        clients.remove(oldNick);
+        clients.put(client.getNick(), client);
+        broadcastClientList();
+        broadcast(Command.MESSAGE, "Пользователь под ником " + oldNick + " сменил свой ник на новый- " + client.getNick());
+    }
 }
