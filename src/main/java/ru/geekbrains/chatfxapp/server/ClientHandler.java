@@ -169,14 +169,7 @@ public class ClientHandler {
         String historyText = null;
         try (ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(String.format("history_%s.txt", login)))) {
             historyText = (String) objIn.readObject();
-            System.out.println(System.getProperty("line.separator"));
             String[] historyLines = historyText.split("\\n");
-            System.out.println(historyLines.length - lastLinesToRestore);
-            for (String s: historyLines) {
-                System.out.println("----------");
-                System.out.println(s);
-                System.out.println("----------");
-            }
             return Arrays.stream(historyLines).skip(historyLines.length > lastLinesToRestore? historyLines.length - lastLinesToRestore: 0).collect(Collectors.joining(System.getProperty("line.separator")));
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
