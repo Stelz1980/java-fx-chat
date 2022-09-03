@@ -1,11 +1,13 @@
 package ru.geekbrains.chatfxapp.server;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 public class InMemoryAuthService implements AuthService {
 
     private static class UserData {
@@ -66,6 +68,6 @@ public class InMemoryAuthService implements AuthService {
 
     @Override
     public void close() {
-        System.out.println("Сервис аутентификации остановлен");
+        log.info("Сервис аутентификации остановлен");
     }
 }
