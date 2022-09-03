@@ -3,9 +3,7 @@ package ru.geekbrains.chatfxapp.client;
 import javafx.application.Platform;
 import ru.geekbrains.chatfxapp.Command;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 import static java.lang.Thread.sleep;
@@ -88,6 +86,7 @@ public class ChatClient {
             final String message = in.readUTF();
             final Command command = Command.getCommand(message);
             if (command == END) {
+
                 controller.sendAuth(false);
                 break;
             }
@@ -103,11 +102,15 @@ public class ChatClient {
             if (command == Command.CLIENTS) {
                 Platform.runLater(() -> controller.updateClientList(params));
             }
+            if (command == Command.RESTORE_HISTORY) {
+                Platform.runLater(() -> controller.downloadHistoryToMessageArea(command.parse(message)[0]));
+            }
         }
     }
 
     private void closeConnection() {
         System.out.println("Выключаемся");
+
         if (in != null) {
             try {
                 in.close();

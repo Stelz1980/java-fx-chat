@@ -58,12 +58,26 @@ public enum Command {
             return new String[]{split[1]};
         }
     },
-        NEW_NICK("/nick") {
-            @Override
-            public String[] parse(String commandText) {
-                final String[] split = commandText.split(TOKEN_DELIMITER, 2);
-                return new String[]{split[1]};
-            }
+    NEW_NICK("/nick") {
+        @Override
+        public String[] parse(String commandText) {
+            final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+            return new String[]{split[1]};
+        }
+    },
+    SAVE_HISTORY("/save_history") {
+        @Override
+        public String[] parse(String commandText) {
+            final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+            return new String[]{split[1]};
+        }
+    },
+    RESTORE_HISTORY("/restore_history") {
+        @Override
+        public String[] parse(String commandText) {
+            final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+            return new String[]{split[1]};
+        }
     };
 
 

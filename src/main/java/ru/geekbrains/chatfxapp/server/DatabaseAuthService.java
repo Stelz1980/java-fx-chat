@@ -1,7 +1,5 @@
 package ru.geekbrains.chatfxapp.server;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.sql.*;
 
 public class DatabaseAuthService implements AuthService {
@@ -10,7 +8,7 @@ public class DatabaseAuthService implements AuthService {
 
     public DatabaseAuthService() {
         try {
-            connection  = DriverManager.getConnection("jdbc:sqlite:Users.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:Users.db");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -18,10 +16,10 @@ public class DatabaseAuthService implements AuthService {
 
     @Override
     public String getNickByLoginAndPassword(String login, String password) {
-        String sql =  "SELECT login, password, nick FROM users WHERE login = ? AND password = ?";
+        String sql = "SELECT login, password, nick FROM users WHERE UPPER(login) = ? AND password = ?";
         try {
             ps = connection.prepareStatement(sql);
-            ps.setString(1, login);
+            ps.setString(1, login.toUpperCase());
             ps.setString(2, password);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -34,9 +32,9 @@ public class DatabaseAuthService implements AuthService {
     }
 
     public void updateNick(String newNick, String oldNick) {
-        String sql =  "UPDATE users SET nick = ? WHERE nick = ?";
+        String sql = "UPDATE users SET nick = ? WHERE nick = ?";
         try {
-            ps = connection.  prepareStatement(sql);
+            ps = connection.prepareStatement(sql);
             ps.setString(1, newNick);
             ps.setString(2, oldNick);
             ps.execute();

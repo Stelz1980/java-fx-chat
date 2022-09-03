@@ -106,6 +106,7 @@ public class ChatController {
     }
 
     public void signOutClick() {
+        client.sendMessage(Command.SAVE_HISTORY, messageArea.getText());
         client.sendMessage(Command.END);
     }
 
@@ -114,7 +115,14 @@ public class ChatController {
     }
 
     public void changeNickButton() {
-        System.out.println(newNickField.getText());
         client.sendMessage(Command.NEW_NICK, newNickField.getText());
+    }
+
+    public TextArea getMessageArea() {
+        return messageArea;
+    }
+
+    public void downloadHistoryToMessageArea(String historyText) {
+        messageArea.appendText(historyText);
     }
 }

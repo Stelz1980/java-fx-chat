@@ -2,20 +2,24 @@ package ru.geekbrains.chatfxapp.server;
 
 import ru.geekbrains.chatfxapp.Command;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
 public class ClientHandler {
+    private static final int LAST_LINES_TO_RESTORE = 100;
     private AuthService authService;
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
     private ChatServer server;
     private String nick;
+    private String login;
+
+
 
     public ClientHandler(Socket socket, ChatServer server, AuthService authService) {
         try {
@@ -45,7 +49,7 @@ public class ClientHandler {
                 final Command command = Command.getCommand(message);
                 if (command == Command.AUTH) {
                     final String[] params = command.parse(message);
-                    final String login = params[0];
+                    login = params[0];
                     final String password = params[1];
                     final String nick = authService.getNickByLoginAndPassword(login, password);
                     if (nick != null) {
@@ -57,12 +61,16 @@ public class ClientHandler {
                         this.nick = nick;
                         server.broadcast(Command.MESSAGE, "Пользователь " + nick + " зашел в чат");
                         server.subscribe(this);
+                        String historyText = restoreHistory( login, LAST_LINES_TO_RESTORE);
+                        if (historyText != null) {
+                            sendMessage(Command.RESTORE_HISTORY, historyText);
+                        }
                         return true;
                     } else {
                         sendMessage(Command.ERROR, "Неверные логин и пароль");
                     }
                 } else if (command == Command.END) {
-                         return false;
+                    return false;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -137,12 +145,38 @@ public class ClientHandler {
                     }
                     continue;
                 }
+                if (command == Command.SAVE_HISTORY) {
+                    final String[] params = command.parse(message);
+                    saveHistory(login, params[0]);
+                    continue;
+                }
                 server.broadcast(Command.MESSAGE, nick + ": " + command.parse(message)[0]);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private void saveHistory(String login, String historyText) {
+        try (ObjectOutputStream objOut = new ObjectOutputStream(new FileOutputStream(String.format("history_%s.txt", login)))) {
+            objOut.writeObject(historyText);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String restoreHistory(String login, int lastLinesToRestore) {
+        String historyText = null;
+        try (ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(String.format("history_%s.txt", login)))) {
+            historyText = (String) objIn.readObject();
+            String[] historyLines = historyText.split("\\n");
+            return Arrays.stream(historyLines).skip(historyLines.length > lastLinesToRestore? historyLines.length - lastLinesToRestore: 0).collect(Collectors.joining(System.getProperty("line.separator")));
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+        return historyText;
+    }
+
 
     public String getNick() {
         return nick;
