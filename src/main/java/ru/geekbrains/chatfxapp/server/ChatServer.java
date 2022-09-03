@@ -1,5 +1,6 @@
 package ru.geekbrains.chatfxapp.server;
 
+import lombok.extern.slf4j.*;
 import ru.geekbrains.chatfxapp.Command;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class ChatServer {
     private static final int PORT = 8189;
     private final Map<String, ClientHandler> clients;
@@ -21,11 +23,11 @@ public class ChatServer {
         try (ServerSocket serverSocket = new ServerSocket(PORT);
              AuthService authService = new DatabaseAuthService()) {
             while (true) {
-                System.out.println("Сервер запущен. Ждем подключения клиента ");
+                log.info("Сервер запущен. Ждем подключения клиента ");
                 final Socket socket;
                 socket = serverSocket.accept();
                 new ClientHandler(socket, this, authService);
-                System.out.println("Клиент подключился");
+                log.info("Клиент подключился");
             }
         } catch (IOException e) {
             e.printStackTrace();

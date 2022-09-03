@@ -1,5 +1,6 @@
 package ru.geekbrains.chatfxapp.server;
 
+import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.chatfxapp.Command;
 
 import java.io.*;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
+@Slf4j
 public class ClientHandler {
     private static final int LAST_LINES_TO_RESTORE = 100;
     private AuthService authService;
@@ -18,7 +20,6 @@ public class ClientHandler {
     private ChatServer server;
     private String nick;
     private String login;
-
 
 
     public ClientHandler(Socket socket, ChatServer server, AuthService authService) {
@@ -61,7 +62,7 @@ public class ClientHandler {
                         this.nick = nick;
                         server.broadcast(Command.MESSAGE, "Пользователь " + nick + " зашел в чат");
                         server.subscribe(this);
-                        String historyText = restoreHistory( login, LAST_LINES_TO_RESTORE);
+                        String historyText = restoreHistory(login, LAST_LINES_TO_RESTORE);
                         if (historyText != null) {
                             sendMessage(Command.RESTORE_HISTORY, historyText);
                         }
@@ -127,29 +128,35 @@ public class ClientHandler {
                 final String message = in.readUTF();
                 Command command = Command.getCommand(message);
                 if (command == Command.END) {
+                    log.info(String.format("%s отключается", nick));
                     break;
                 }
                 if (command == Command.PRIVATE_MESSAGE) {
+                    log.info(String.format("%s послал приватное сообщение", nick));
                     final String[] params = command.parse(message);
                     server.sendPrivateMessage(this, params[0], params[1]);
                     continue;
                 }
                 if (command == Command.NEW_NICK) {
+                    log.info(String.format("%s пытается поменять ник", nick));
                     final String[] params = command.parse(message);
                     if (!server.isNickBusy(params[0])) {
                         String oldNick = this.nick;
                         this.nick = params[0];
                         server.UpdateNickMessage(this, oldNick);
                     } else {
+                        log.info(String.format("%s не смог поменять ник", nick));
                         sendMessage(Command.ERROR, "Такой ник уже занят. Выберите другой");
                     }
                     continue;
                 }
                 if (command == Command.SAVE_HISTORY) {
+                    log.info(String.format("Для %s сохраняем историю сообщений", nick));
                     final String[] params = command.parse(message);
                     saveHistory(login, params[0]);
                     continue;
                 }
+                log.info(String.format("%s высылает общее сообщение", nick));
                 server.broadcast(Command.MESSAGE, nick + ": " + command.parse(message)[0]);
             }
         } catch (IOException e) {
@@ -167,13 +174,19 @@ public class ClientHandler {
 
     private String restoreHistory(String login, int lastLinesToRestore) {
         String historyText = null;
-        try (ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(String.format("history_%s.txt", login)))) {
-            historyText = (String) objIn.readObject();
-            String[] historyLines = historyText.split("\\n");
-            return Arrays.stream(historyLines).skip(historyLines.length > lastLinesToRestore? historyLines.length - lastLinesToRestore: 0).collect(Collectors.joining(System.getProperty("line.separator")));
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
+        String fileName = String.format("history_%s.txt", login);
+        if (new File(fileName).exists()) {
+            try (ObjectInputStream objIn = new ObjectInputStream(new FileInputStream(fileName))) {
+                historyText = (String) objIn.readObject();
+                String[] historyLines = historyText.split("\\n");
+                return Arrays.stream(historyLines).skip(historyLines.length > lastLinesToRestore ? historyLines.length - lastLinesToRestore : 0).collect(Collectors.joining(System.getProperty("line.separator")));
+            } catch (ClassNotFoundException | IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            log.info(String.format("%s не имеет файл с историей", nick));
         }
+
         return historyText;
     }
 

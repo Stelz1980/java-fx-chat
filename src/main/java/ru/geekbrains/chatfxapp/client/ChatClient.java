@@ -109,8 +109,6 @@ public class ChatClient {
     }
 
     private void closeConnection() {
-        System.out.println("Выключаемся");
-
         if (in != null) {
             try {
                 in.close();
